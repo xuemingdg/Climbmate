@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:state_pressed="true">
+        <shape
+            android:shape="rectangle">
+            <solid android:color="@color/color_btn_pressed"/>
+            <corners android:radius="15dip"/>
+        </shape>
+    </item>
+    <item android:state_pressed="false"
+        android:drawable="@drawable/button_gradient">
+
+    </item>
+    <item android:state_enabled="false">
+        <shape
+            android:shape="rectangle">
+            <solid android:color="@color/color_btn_disable"/>
+            <corners android:radius="15dip"/>
+        </shape>
+    </item>
+</selector>
