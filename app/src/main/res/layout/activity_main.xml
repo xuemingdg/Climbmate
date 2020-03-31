@@ -4,56 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/login_background"
     tools:context=".MainActivity">
-
-    <EditText
-        android:id="@+id/username_edit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:hint="@string/username_hint"
-        android:textColorHint="@color/colorHint"
-        android:textColor="@android:color/white"
-        android:theme="@style/MyEditText"
-        android:inputType="textEmailAddress"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.7" />
-
-    <EditText
-        android:id="@+id/password_edit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:hint="@string/password_hint"
-        android:textColorHint="@color/colorHint"
-        android:textColor="@android:color/white"
-        android:theme="@style/MyEditText"
-        android:inputType="textVisiblePassword"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/username_edit"
-        app:layout_constraintVertical_bias="0.1" />
-
-    <Button
-        android:id="@+id/loginbtn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="40dp"
-        android:layout_marginRight="40dp"
-        android:text="@string/login_text"
-        android:textColor="@android:color/white"
-        android:background="@drawable/button_style"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/password_edit"
-        app:layout_constraintVertical_bias="0.15"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

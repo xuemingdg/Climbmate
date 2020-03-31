@@ -5,7 +5,8 @@
     <color name="colorAccent">#03DAC5</color>
     <color name="colorHint">#7B7B7B</color>
     <color name="black_overlay">#66000000</color>
-    <color name="color_btn_disable">#4682B4</color>
+    <color name="color_blue">#4682B4</color>
+    <color name="color_btn_disable">#708090</color>
     <color name="color_btn_pressed">#66000000</color>
     <color name="colorSnow">#87CEFA</color>
 </resources>
