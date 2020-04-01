@@ -3,6 +3,7 @@ package com.hokming.climbmate;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -32,17 +33,32 @@ public class LoginActivity extends AppCompatActivity {
     Button loginButton;
 
     private static final String TAG = "LoginActivity";
+    public static final String sp = "LOGIN_USER";
     private boolean usernameFinishEdit = false;
     private boolean passwordFinishEdit = false;
     private SQLiteDatabase db;
     private MySQLiteOpenHelper mySQLiteOpenHelper;
+    private SharedPreferences sharedPreferences = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (preLoad(savedInstanceState)) {
+            return;
+        }
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
         ImmersionBar.with(this).init();
         initEdittextListeners();
+    }
+
+    private boolean preLoad(Bundle savedInstanceState) {
+        sharedPreferences = getSharedPreferences(sp, MODE_PRIVATE);
+        String username=sharedPreferences.getString(MySQLiteOpenHelper.USER_COLUMN_USERNAME, "");
+        if(!username.isEmpty()){
+            goToMain(username);
+            return true;
+        }
+        return false;
     }
 
     @OnClick(R.id.loginbtn)
@@ -65,16 +81,23 @@ public class LoginActivity extends AppCompatActivity {
             else{
                 mySQLiteOpenHelper.insertUser(usernameInput, passwordInput , 0, db);
             }
-            Intent intent = new Intent(this, MainActivity.class);
-            Bundle bundle = new Bundle();
-            bundle.putString(MySQLiteOpenHelper.USER_COLUMN_USERNAME, usernameInput);
-            intent.putExtras(bundle);
-            startActivity(intent);
-            finish();
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(MySQLiteOpenHelper.USER_COLUMN_USERNAME, usernameInput);
+            editor.apply();
+            goToMain(usernameInput);
         }
         else{
             Toast.makeText(this, "Username or password is empty!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void goToMain(String usernameInput) {
+        Intent intent = new Intent(this, MainActivity.class);
+        Bundle bundle = new Bundle();
+        bundle.putString(MySQLiteOpenHelper.USER_COLUMN_USERNAME, usernameInput);
+        intent.putExtras(bundle);
+        startActivity(intent);
+        finish();
     }
 
     private void initEdittextListeners() {
