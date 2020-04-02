@@ -1,2 +1,2 @@
 rootProject.name='climbmate'
-include ':app'
+include ':app', ':lib-jlogger', ':base-lib-notification', ':lib-todaystepcounter'

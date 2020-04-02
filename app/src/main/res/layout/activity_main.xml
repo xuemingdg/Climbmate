@@ -65,6 +65,31 @@
         android:textColor="@android:color/black"
         />
 
+    <TextView
+        android:id="@+id/step_target_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/black"
+        android:layout_below="@+id/user_title"
+        android:layout_marginTop="5dp"
+        android:layout_alignLeft="@id/user_title"
+        android:textSize="20sp"
+        android:text="Target steps:"
+        android:textStyle="bold"/>
+
+    <EditText
+        android:id="@+id/step_target"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/black"
+        android:layout_toRightOf="@id/step_target_hint"
+        android:layout_alignBaseline="@+id/step_target_hint"
+        android:textSize="20sp"
+        android:text="10000"
+        android:inputType="number"
+        android:maxLength="6"
+        />
+
     <ImageView
         android:id="@+id/edit_btn"
         android:layout_width="20dp"

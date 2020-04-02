@@ -1,0 +1,33 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion versions.compileSdk
+    buildToolsVersion '28.0.3'
+
+    defaultConfig {
+        minSdkVersion versions.minSdk
+        targetSdkVersion versions.targetSdk
+        versionCode change.code
+        versionName change.name
+
+    }
+    buildTypes {
+        debug {
+            buildConfigField "boolean", "TODAY_STEP_DEBUG", "true"
+        }
+        release {
+            buildConfigField "boolean", "TODAY_STEP_DEBUG", "true"
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile libraries.supportAppCompat
+    implementation project(':base-lib-notification')
+    implementation project(':lib-jlogger')
+//    implementation project(':lib-encrypt')
+
+}

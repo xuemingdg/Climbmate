@@ -8,10 +8,12 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.Shader;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.view.animation.OvershootInterpolator;
 
 import androidx.annotation.ColorRes;
@@ -19,6 +21,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
 import com.hokming.climbmate.R;
+import com.today.step.lib.TodayStepService;
 
 /**
  * Date:        2020/4/2
@@ -27,10 +30,11 @@ import com.hokming.climbmate.R;
  */
 public class CircularProgressView extends View {
 
-    private Paint backPaint, progPaint;   // draw paint
+    private Paint backPaint, progPaint, textPaint;   // draw paint
     private RectF rectF;       // draw area
     private int[] colorArray;  // hoop color range
     private int progress;      // hoop progress
+    private int step = 0;
 
     public CircularProgressView(Context context) {
         this(context, null);
@@ -63,13 +67,18 @@ public class CircularProgressView extends View {
         progPaint.setStrokeWidth(typedArray.getDimension(R.styleable.CircularProgressView_progWidth, 10));
         progPaint.setColor(typedArray.getColor(R.styleable.CircularProgressView_progColor, Color.BLUE));
 
+        textPaint = new Paint();
+        textPaint.setStyle(Paint.Style.STROKE);
+        textPaint.setAntiAlias(true);
+        textPaint.setColor(Color.WHITE);
+        textPaint.setTextSize(60);
+        textPaint.setTextAlign(Paint.Align.CENTER);
         // init progress hoop colorarray
         int startColor = typedArray.getColor(R.styleable.CircularProgressView_progStartColor, -1);
         int firstColor = typedArray.getColor(R.styleable.CircularProgressView_progFirstColor, -1);
         if (startColor != -1 && firstColor != -1) colorArray = new int[]{startColor, firstColor};
         else colorArray = null;
 
-        // 初始化进度
         progress = typedArray.getInteger(R.styleable.CircularProgressView_progress, 0);
         typedArray.recycle();
     }
@@ -94,6 +103,8 @@ public class CircularProgressView extends View {
         super.onDraw(canvas);
         canvas.drawArc(rectF, 0, 360, false, backPaint);
         canvas.drawArc(rectF, 275, 360 * progress / 100, false, progPaint);
+        canvas.drawText("Today's steps:",rectF.centerX(), rectF.centerY()-30, textPaint);
+        canvas.drawText(""+step, rectF.centerX(), rectF.centerY()+50, textPaint);
     }
 
 
@@ -117,7 +128,7 @@ public class CircularProgressView extends View {
                     invalidate();
                 }
             });
-            animator.setInterpolator(new OvershootInterpolator());
+            animator.setInterpolator(new LinearInterpolator());
             animator.setDuration(animTime);
             animator.start();
         }
@@ -161,5 +172,10 @@ public class CircularProgressView extends View {
             this.colorArray[index] = ContextCompat.getColor(getContext(), colorArray[index]);
         progPaint.setShader(new LinearGradient(0, 0, 0, getMeasuredWidth(), this.colorArray, null, Shader.TileMode.MIRROR));
         invalidate();
+    }
+
+
+    public void setStep(int step) {
+        this.step = step;
     }
 }

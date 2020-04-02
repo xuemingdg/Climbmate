@@ -2,10 +2,11 @@ package com.hokming.climbmate.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -18,7 +19,10 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
+import android.os.RemoteException;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.Animation;
@@ -33,22 +37,33 @@ import android.widget.Toast;
 import com.gyf.immersionbar.ImmersionBar;
 import com.hokming.climbmate.R;
 import com.hokming.climbmate.util.MySQLiteOpenHelper;
+import com.today.step.lib.ISportStepInterface;
+import com.today.step.lib.TodayStepManager;
+import com.today.step.lib.TodayStepService;
 
 import net.qiujuer.genius.blur.StackBlur;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import io.nlopez.smartlocation.SmartLocation;
+
+import static com.hokming.climbmate.ui.LoginActivity.sp;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
 
     private static final String TAG = "MainActivity";
+    private static final String STEP_TARGET = "stepTarget";
     private float[] r = new float[9];
     private float[] values = new float[3];
     private float[] gravity = null;
     private float[] geomagnetic = null;
+
+    private static final int REFRESH_STEP_WHAT = 0;
+
+    private long TIME_INTERVAL_REFRESH = 3000;
+
+    private Handler delayHandler = new Handler(new TodayStepCounterCall());
 
     private SensorManager sensorManager;
     private CustomHandler customHandler = null;
@@ -59,6 +74,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private MySQLiteOpenHelper mySQLiteOpenHelper;
     private String loginUserName = "";
     private String name = "";
+    private int stepSum;
+    private ISportStepInterface iSportStepInterface;
+    private float targetStep = 1000;
+    private ServiceConnection serviceConnection;
+    private SharedPreferences sharedPreferences ;
 
     @BindView(R.id.compass)
     ImageView compass;
@@ -80,6 +100,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @BindView(R.id.panelview)
     CircularProgressView circularProgressView;
+
+    @BindView(R.id.step_target)
+    EditText stepTarget;
 
     @SuppressLint("CheckResult")
     @Override
@@ -110,6 +133,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void initService() {
         customHandler = new CustomHandler();
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        TodayStepManager.startTodayStepService(getApplication());
+        Intent intent = new Intent(this, TodayStepService.class);
+        serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                iSportStepInterface = ISportStepInterface.Stub.asInterface(service);
+                try {
+                    stepSum = iSportStepInterface.getCurrentTimeSportStep();
+                    updateStepCount();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+                delayHandler.sendEmptyMessageDelayed(REFRESH_STEP_WHAT, TIME_INTERVAL_REFRESH);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
+        };
+        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void initUI() {
@@ -137,11 +181,31 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return false; // pass on to other listeners.
         }
         );
+        sharedPreferences = getSharedPreferences(sp, MODE_PRIVATE);
+        targetStep = sharedPreferences.getInt(STEP_TARGET, 10000);
+        stepTarget.setText((int)targetStep+"");
+        stepTarget.setOnEditorActionListener((v, actionId, event) -> {
+                    if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                            actionId == EditorInfo.IME_ACTION_DONE ||
+                            event != null &&
+                                    event.getAction() == KeyEvent.ACTION_DOWN &&
+                                    event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                        if (event == null || !event.isShiftPressed()) {
+                            // the user is done typing.
+                            targetStep = Integer.parseInt(stepTarget.getText().toString());
+                            updateStepCount();
+                            return true; // consume.
+                        }
+                    }
+                    return false; // pass on to other listeners.
+                }
+        );
     }
 
     @OnClick(R.id.edit_btn)
     public void editNickname(){
         editBtn.setVisibility(View.GONE);
+        nameTextView.setText("");
         nameTextView.setEnabled(true);
         nameTextView.setFocusable(true);
         nameTextView.setFocusableInTouchMode(true);
@@ -153,7 +217,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @OnClick(R.id.logout_btn)
     public void logout(){
-        SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.sp, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(MySQLiteOpenHelper.USER_COLUMN_USERNAME, "");
         editor.apply();
@@ -172,7 +235,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                         if (SensorManager.getRotationMatrix(r, null, gravity, geomagnetic)) {
                             SensorManager.getOrientation(r, values);
                             float degree = (float) ((360f - values[0] * 180f / Math.PI) % 360);
-//                            Log.i(TAG, "angle from northpole:" + degree);
                             RotateAnimation ra = new RotateAnimation(angle, degree, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
                             ra.setDuration(5);
                             ra.setFillAfter(true);
@@ -200,6 +262,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.registerListener(this, pressureSensor, SensorManager.SENSOR_DELAY_NORMAL);
         if(pressureSensor == null){
             Toast.makeText(this, "No Pressure Sensor Detected.", Toast.LENGTH_SHORT).show();
+            pressureTextView.setVisibility(View.GONE);
+            altitudeTextView.setVisibility(View.GONE);
+        }
+        if(acceleSensor == null || magSensor == null) {
+            compass.setVisibility(View.GONE);
         }
     }
 
@@ -238,6 +305,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         return (sp - pressure) * 100.0f / 12.7f;
     }
 
+    private void updateStepCount() {
+        circularProgressView.setProgress((int)(stepSum*100/targetStep),1*1000);
+        circularProgressView.setStep(stepSum);
+    }
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -247,5 +318,38 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         customHandler.removeMessages(0);
         customHandler.removeMessages(1);
         customHandler = null;
+        unbindService(serviceConnection);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putInt(STEP_TARGET, Integer.parseInt(stepTarget.getText().toString()));
+        editor.apply();
     }
+
+    class TodayStepCounterCall implements Handler.Callback {
+
+        @Override
+        public boolean handleMessage(Message msg) {
+            switch (msg.what) {
+                case REFRESH_STEP_WHAT: {
+                    //update ui every 500 millisec
+                    if (null != iSportStepInterface) {
+                        int step = 0;
+                        try {
+                            step = iSportStepInterface.getCurrentTimeSportStep();
+                        } catch (RemoteException e) {
+                            e.printStackTrace();
+                        }
+                        if (stepSum != step) {
+                            stepSum = step;
+                            updateStepCount();
+                        }
+                    }
+                    delayHandler.sendEmptyMessageDelayed(REFRESH_STEP_WHAT, TIME_INTERVAL_REFRESH);
+
+                    break;
+                }
+            }
+            return false;
+        }
+    }
+
 }
