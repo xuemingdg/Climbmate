@@ -1,7 +1,8 @@
-package com.hokming.climbmate;
+package com.hokming.climbmate.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -18,9 +19,6 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.Animation;
@@ -33,18 +31,20 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gyf.immersionbar.ImmersionBar;
+import com.hokming.climbmate.R;
+import com.hokming.climbmate.util.MySQLiteOpenHelper;
 
 import net.qiujuer.genius.blur.StackBlur;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.nlopez.smartlocation.SmartLocation;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
 
     private static final String TAG = "MainActivity";
-    public static final String sp = "LOGIN_USER";
     private float[] r = new float[9];
     private float[] values = new float[3];
     private float[] gravity = null;
@@ -78,12 +78,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @BindView(R.id.background_imagev)
     ImageView backgroundImageview;
 
+    @BindView(R.id.panelview)
+    CircularProgressView circularProgressView;
+
     @SuppressLint("CheckResult")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         initService();
         initUI();
         getLoginUser();
@@ -96,7 +98,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             db = mySQLiteOpenHelper.getWritableDatabase();
             Cursor cursor = mySQLiteOpenHelper.getUser(loginUserName, db);
             if(cursor.getCount()>0){
-                Log.d(TAG, "getLoginUser: ");
                 cursor.moveToFirst();
                 name = cursor.getString(cursor.getColumnIndex(MySQLiteOpenHelper.USER_COLUMN_NAME));
                 nameTextView.setText(name);
@@ -109,15 +110,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void initService() {
         customHandler = new CustomHandler();
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        //        new RxPermissions(this).request(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-//                .compose(RxUtil.lifeCycle(this))
-//                .subscribe(bool -> {
-//                    if (bool) {
-//                        SmartLocation.with(this).location().start(location -> Log.d("dxm", "onLocationUpdated: "+location.toString()));
-//                    } else {
-//                        Toast.makeText(this, "Please grant permissions", Toast.LENGTH_SHORT).show();
-//                    }
-//                });
     }
 
     private void initUI() {
@@ -161,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @OnClick(R.id.logout_btn)
     public void logout(){
-        SharedPreferences sharedPreferences = getSharedPreferences(sp, MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.sp, MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(MySQLiteOpenHelper.USER_COLUMN_USERNAME, "");
         editor.apply();
@@ -206,6 +198,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         sensorManager.registerListener(this, magSensor, SensorManager.SENSOR_DELAY_NORMAL);
         Sensor pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
         sensorManager.registerListener(this, pressureSensor, SensorManager.SENSOR_DELAY_NORMAL);
+        if(pressureSensor == null){
+            Toast.makeText(this, "No Pressure Sensor Detected.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

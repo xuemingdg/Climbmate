@@ -1,4 +1,4 @@
-package com.hokming.climbmate;
+package com.hokming.climbmate.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -10,12 +10,13 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.InputFilter;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.gyf.immersionbar.ImmersionBar;
+import com.hokming.climbmate.R;
+import com.hokming.climbmate.util.MySQLiteOpenHelper;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;

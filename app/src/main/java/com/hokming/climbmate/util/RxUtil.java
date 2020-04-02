@@ -1,4 +1,4 @@
-package com.hokming.climbmate;
+package com.hokming.climbmate.util;
 
 import android.app.Activity;
 

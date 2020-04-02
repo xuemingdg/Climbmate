@@ -9,4 +9,13 @@
         <attr name="metaButtonBarButtonStyle" format="reference" />
     </declare-styleable>
 
+    <declare-styleable name="CircularProgressView">
+        <attr name="backWidth" format="dimension" />    <!--back width-->
+        <attr name="progWidth" format="dimension" />    <!--progress width-->
+        <attr name="backColor" format="color" />        <!--back color-->
+        <attr name="progColor" format="color" />        <!--progress color-->
+        <attr name="progStartColor" format="color" />   <!--start color-->
+        <attr name="progFirstColor" format="color" />   <!--end color-->
+        <attr name="progress" format="integer" />       <!--progress-->
+    </declare-styleable>
 </resources>
