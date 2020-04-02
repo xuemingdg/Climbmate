@@ -3,6 +3,11 @@ package com.hokming.climbmate;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -13,10 +18,19 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.RotateAnimation;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.gyf.immersionbar.ImmersionBar;
 
@@ -24,11 +38,13 @@ import net.qiujuer.genius.blur.StackBlur;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
 
     private static final String TAG = "MainActivity";
+    public static final String sp = "LOGIN_USER";
     private float[] r = new float[9];
     private float[] values = new float[3];
     private float[] gravity = null;
@@ -39,6 +55,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private float angle = 0.0F;
     private float pressure = 0.0F;
     private float altitude = 0.0F;
+    private SQLiteDatabase db;
+    private MySQLiteOpenHelper mySQLiteOpenHelper;
+    private String loginUserName = "";
+    private String name = "";
 
     @BindView(R.id.compass)
     ImageView compass;
@@ -49,6 +69,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @BindView(R.id.altitude)
     TextView altitudeTextView;
 
+    @BindView(R.id.user_title)
+    EditText nameTextView;
+
+    @BindView(R.id.edit_btn)
+    ImageView editBtn;
+
     @BindView(R.id.background_imagev)
     ImageView backgroundImageview;
 
@@ -57,9 +83,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         initService();
         initUI();
+        getLoginUser();
+    }
 
+    private void getLoginUser() {
+        try {
+            loginUserName = getIntent().getExtras().getString(MySQLiteOpenHelper.USER_COLUMN_USERNAME);
+            mySQLiteOpenHelper = new MySQLiteOpenHelper(getApplicationContext());
+            db = mySQLiteOpenHelper.getWritableDatabase();
+            Cursor cursor = mySQLiteOpenHelper.getUser(loginUserName, db);
+            if(cursor.getCount()>0){
+                Log.d(TAG, "getLoginUser: ");
+                cursor.moveToFirst();
+                name = cursor.getString(cursor.getColumnIndex(MySQLiteOpenHelper.USER_COLUMN_NAME));
+                nameTextView.setText(name);
+            }
+        }catch (NullPointerException ex){
+            ex.printStackTrace();
+        }
     }
 
     private void initService() {
@@ -83,6 +127,47 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         Bitmap result = StackBlur.blurNatively(bmp, 100 , false);
         bmp.recycle();
         backgroundImageview.setBackground(new BitmapDrawable(result));
+        nameTextView.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH ||
+                    actionId == EditorInfo.IME_ACTION_DONE ||
+                    event != null &&
+                            event.getAction() == KeyEvent.ACTION_DOWN &&
+                            event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                if (event == null || !event.isShiftPressed()) {
+                    // the user is done typing.
+                    editBtn.setVisibility(View.VISIBLE);
+                    nameTextView.setEnabled(false);
+                    name = nameTextView.getText().toString();
+                    mySQLiteOpenHelper.updateUser(loginUserName, name);
+                    return true; // consume.
+                }
+            }
+            return false; // pass on to other listeners.
+        }
+        );
+    }
+
+    @OnClick(R.id.edit_btn)
+    public void editNickname(){
+        editBtn.setVisibility(View.GONE);
+        nameTextView.setEnabled(true);
+        nameTextView.setFocusable(true);
+        nameTextView.setFocusableInTouchMode(true);
+        nameTextView.requestFocus();
+        nameTextView.findFocus();
+        InputMethodManager imm = (InputMethodManager) this.getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.showSoftInput(nameTextView, InputMethodManager.SHOW_FORCED);
+    }
+
+    @OnClick(R.id.logout_btn)
+    public void logout(){
+        SharedPreferences sharedPreferences = getSharedPreferences(sp, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(MySQLiteOpenHelper.USER_COLUMN_USERNAME, "");
+        editor.apply();
+        Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 
@@ -161,6 +246,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if(db!=null){
+            db.close();
+        }
         customHandler.removeMessages(0);
         customHandler.removeMessages(1);
         customHandler = null;

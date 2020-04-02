@@ -45,4 +45,42 @@
         android:layout_marginTop="5dp"
         android:text="- m"
         />
+
+    <EditText
+        android:id="@+id/user_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignTop="@+id/compass"
+        android:layout_marginLeft="5dp"
+        android:gravity="center_horizontal"
+        android:text=""
+        android:textSize="25sp"
+        android:textStyle="bold"
+        android:maxLength="32"
+        android:singleLine="true"
+        android:enabled="false"
+        style="@android:style/Widget.TextView"
+        android:background="@null"
+        />
+
+    <ImageView
+        android:id="@+id/edit_btn"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_toRightOf="@id/user_title"
+        android:layout_marginLeft="5dp"
+        android:background="@drawable/edit"
+        android:layout_alignTop="@+id/user_title"
+        />
+
+    <ImageView
+        android:id="@+id/logout_btn"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@drawable/logout"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_margin="10dp"
+        />
 </RelativeLayout>

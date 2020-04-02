@@ -20,7 +20,7 @@ public class MySQLiteOpenHelper extends SQLiteOpenHelper {
 
     public static final String CREATE_USER = "create table User ("
             + "id integer primary key autoincrement," + "username text,"
-            + "password text," + "rating integer," + "info text)";
+            + "password text," +"name text,"+"rating integer," + "info text)";
 
     private Context context;
 
@@ -53,7 +53,7 @@ public class MySQLiteOpenHelper extends SQLiteOpenHelper {
         contentValues.put(USER_COLUMN_USERNAME, username);
         contentValues.put(USER_COLUMN_PASSWORD, password);
         contentValues.put(USER_COLUMN_RATING, rating);
-        contentValues.put(USER_COLUMN_NAME, username);
+        contentValues.put(USER_COLUMN_NAME, "nickname");
         db.insert(USER_TABLE_NAME, null, contentValues);
         return true;
     }
@@ -75,11 +75,19 @@ public class MySQLiteOpenHelper extends SQLiteOpenHelper {
                 USER_COLUMN_USERNAME + "=?", new String[]{username});
     }
 
-    public boolean updateUser(Integer id,  int rating) {
+    public boolean updateUser(String username,  int rating) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-//        contentValues.put(USER_COLUMN_RATING, rating);
-        db.update(USER_TABLE_NAME, contentValues, USER_COLUMN_ID + " = ? ", new String[] { Integer.toString(id) } );
+        contentValues.put(USER_COLUMN_RATING, rating);
+        db.update(USER_TABLE_NAME, contentValues, USER_COLUMN_USERNAME + " = ? ", new String[] { username } );
+        return true;
+    }
+
+    public boolean updateUser(String username,  String name) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(USER_COLUMN_NAME, name);
+        db.update(USER_TABLE_NAME, contentValues, USER_COLUMN_USERNAME + " = ? ", new String[] { username } );
         return true;
     }
 }
